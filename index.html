@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бағалау парағы — Креативті дизайн</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-pink: #ff4d6d;
+            --neon-glow: 0 0 10px rgba(255, 77, 109, 0.8), 0 0 20px rgba(255, 77, 109, 0.5);
+            --text-dark: #2d3436;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            background-attachment: fixed;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 10px;
+        }
+
+        /* Автор стилі */
+        .author {
+            position: fixed;
+            top: 15px;
+            right: 25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--primary-pink);
+            background: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        /* НЕОН ТАҚЫРЫП */
+        .neon-title {
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            text-shadow: var(--neon-glow);
+            margin-bottom: 5px;
+            color: #ff4d6d;
+        }
+
+        .download-btn {
+            background: #fff;
+            color: #2d3436;
+            border: 2px solid #00b894;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 15px 0 30px 0;
+            transition: 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .download-btn:hover {
+            background: #00b894;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* 5 оқушыдан келетін тор */
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 5 баған */
+            gap: 15px;
+            width: 100%;
+            max-width: 1400px;
+            padding: 10px;
+        }
+
+        /* Кішірейтілген карталар */
+        .student-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+            transition: 0.3s;
+        }
+
+        .student-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        }
+
+        .student-name {
+            width: 90%;
+            border: none;
+            border-bottom: 1.5px solid #eee;
+            padding: 5px;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            text-align: center;
+            background: transparent;
+            outline: none;
+        }
+
+        .hearts-box {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+
+        .heart {
+            font-size: 18px; /* Жүректер сәл кішірейтілді */
+            cursor: pointer;
+            color: #dfe6e9;
+            transition: 0.2s;
+        }
+
+        .heart.active {
+            color: var(--primary-pink);
+            text-shadow: 0 0 5px rgba(255, 77, 109, 0.6);
+            transform: scale(1.2);
+        }
+
+        .motivation {
+            font-size: 0.8rem;
+            min-height: 18px;
+            font-weight: 600;
+        }
+
+        /* Экран кіші болғанда (Планшет/Телефон) */
+        @media (max-width: 1200px) {
+            .students-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .students-grid { grid-template-columns: repeat(2, 1fr); }
+            .neon-title { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="author"></div>
+    
+    <div class="neon-title">Бағалау парағы</div>
+    <p style="color: #636e72; margin-bottom: 10px;">Интерактивті 10 балдық жүйе</p>
+
+    <button class="download-btn" onclick="downloadExcel()">
+        📊 Excel-ге сақтау
+    </button>
+
+    <div class="students-grid" id="grid"></div>
+
+    <audio id="popSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const sound = document.getElementById('popSound');
+        const studentData = Array(25).fill(0).map((_, i) => ({ id: i, name: '', score: 0 }));
+
+        for (let i = 0; i < 25; i++) {
+            const card = document.createElement('div');
+            card.className = 'student-card';
+            card.innerHTML = `
+                <input type="text" class="student-name" placeholder="${i+1}-оқушы" oninput="updateName(${i}, this.value)">
+                <div class="hearts-box" id="hearts-${i}">
+                    ${Array(10).fill(0).map((_, j) => `<span class="heart" onclick="rate(${i}, ${j + 1})">❤</span>`).join('')}
+                </div>
+                <div class="motivation" id="msg-${i}"></div>
+            `;
+            grid.appendChild(card);
+        }
+
+        function updateName(id, val) {
+            studentData[id].name = val;
+        }
+
+        function rate(studentId, score) {
+            studentData[studentId].score = score;
+            sound.currentTime = 0;
+            sound.play();
+            
+            if (score >= 9) {
+                confetti({
+                    particleCount: 40,
+                    spread: 45,
+                    origin: { y: 0.7 },
+                    colors: ['#ff4d6d', '#ffffff']
+                });
+            }
+
+            const container = document.getElementById(`hearts-${studentId}`);
+            const hearts = container.querySelectorAll('.heart');
+            hearts.forEach((h, index) => {
+                h.classList.toggle('active', index < score);
+            });
+
+            const msg = document.getElementById(`msg-${studentId}`);
+            if (score >= 1 && score <= 6) {
+                msg.innerText = "Талпын! 💪";
+                msg.style.color = "#fdcb6e";
+            } else if (score >= 7 && score <= 8) {
+                msg.innerText = "Жақсы! 👍";
+                msg.style.color = "#0984e3";
+            } else if (score >= 9 && score <= 10) {
+                msg.innerText = "Керемет! 🔥";
+                msg.style.color = "#00b894";
+            }
+        }
+
+        function downloadExcel() {
+            let csvContent = "\uFEFF"; 
+            csvContent += "Оқушы аты-жөні;Бағасы\n";
+
+            studentData.forEach((s, index) => {
+                let name = s.name.replace(/;/g, ",") || `${index + 1}-оқушы`;
+                csvContent += `${name};${s.score}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Bagalau_Paragy.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
